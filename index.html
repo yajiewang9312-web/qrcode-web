@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>食品二维码溯源系统</title>
+
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --primary-light: #ccfbf1;
+      --blue: #2563eb;
+      --green: #16a34a;
+      --orange: #f97316;
+      --red: #dc2626;
+      --gray-bg: #f3f7f6;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-sub: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 12px 30px rgba(15, 118, 110, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top left, rgba(20, 184, 166, 0.15), transparent 32%),
+        linear-gradient(180deg, #eef8f6 0%, #f8fafc 45%, #f3f4f6 100%);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 28px 16px 50px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0f766e, #0d9488, #22c55e);
+      color: white;
+      border-radius: 26px;
+      padding: 38px 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -80px;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      left: -50px;
+      bottom: -60px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.10);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      margin: 0 0 14px;
+      font-size: clamp(28px, 4vw, 46px);
+      letter-spacing: 1px;
+    }
+
+    .hero p {
+      margin: 8px 0;
+      line-height: 1.8;
+      font-size: 16px;
+      opacity: 0.95;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .hero-badge {
+      padding: 8px 13px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      font-size: 14px;
+    }
+
+    .hero-panel {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 22px;
+      padding: 22px;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-panel .big-icon {
+      font-size: 58px;
+      margin-bottom: 12px;
+    }
+
+    .hero-panel .qr-hint {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .toolbar {
+      margin: 22px 0;
+      display: grid;
+      grid-template-columns: 1fr 220px 140px;
+      gap: 12px;
+    }
+
+    .toolbar input,
+    .toolbar select,
+    .toolbar button,
+    .verify-box input,
+    .verify-box button,
+    .action-btn {
+      height: 44px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 0 14px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .toolbar input:focus,
+    .toolbar select:focus,
+    .verify-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+    }
+
+    button,
+    .action-btn {
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+      border: none;
+      transition: 0.2s ease;
+    }
+
+    button:hover,
+    .action-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 28px 0 16px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .section-title span {
+      width: 8px;
+      height: 24px;
+      background: var(--primary);
+      border-radius: 999px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .product-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      border: 1px solid #eef2f7;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow);
+      border-color: rgba(15, 118, 110, 0.35);
+    }
+
+    .product-card .emoji {
+      font-size: 42px;
+      margin-bottom: 10px;
+    }
+
+    .product-card h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .product-card p {
+      margin: 5px 0;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #ecfeff;
+      color: #0e7490;
+      border: 1px solid #cffafe;
+    }
+
+    .tag.green {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+
+    .tag.orange {
+      background: #ffedd5;
+      color: #c2410c;
+      border-color: #fed7aa;
+    }
+
+    .tag.red {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
+    .status-message {
+      background: white;
+      border-radius: 18px;
+      padding: 20px;
+      border-left: 6px solid var(--orange);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      color: #9a3412;
+      font-weight: 700;
+    }
+
+    .detail {
+      display: none;
+    }
+
+    .detail.show {
+      display: block;
+    }
+
+    .detail-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+      border: 1px solid #eef2f7;
+      margin-bottom: 18px;
+    }
+
+    .product-head {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .product-icon {
+      width: 86px;
+      height: 86px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #ecfdf5, #ccfbf1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      border: 1px solid #a7f3d0;
+    }
+
+    .product-title h2 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .product-title p {
+      margin: 4px 0;
+      color: var(--text-sub);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .info-item {
+      background: #f8fafc;
+      border: 1px solid #edf2f7;
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .info-item .label {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+    }
+
+    .info-item .value {
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .summary-box {
+      background: linear-gradient(135deg, #ecfdf5, #f0fdfa);
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      border-radius: 18px;
+      padding: 16px;
+      line-height: 1.8;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+
+    .progress-wrap {
+      margin-top: 14px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+    }
+
+    .progress {
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-inner {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #22c55e, #14b8a6);
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    th,
+    td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #374151;
+    }
+
+    tr:hover td {
+      background: #f9fafb;
+    }
+
+    .timeline {
+      position: relative;
+      padding-left: 18px;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 5px;
+      bottom: 5px;
+      width: 2px;
+      background: #99f6e4;
+    }
+
+    .timeline-item {
+      position: relative;
+      padding: 0 0 18px 24px;
+    }
+
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -16px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      background: var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px #ccfbf1;
+    }
+
+    .timeline-item .time {
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 5px;
+    }
+
+    .timeline-item .event {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .timeline-item .meta {
+      color: var(--text-sub);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .side-card {
+      position: sticky;
+      top: 18px;
+    }
+
+    .qr-box {
+      text-align: center;
+    }
+
+    .qr-box img {
+      width: 185px;
+      height: 185px;
+      border-radius: 14px;
+      border: 8px solid white;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.10);
+      background: white;
+    }
+
+    .link-box {
+      word-break: break-all;
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 12px;
+      color: #374151;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 12px;
+      border: 1px dashed #cbd5e1;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .action-btn.secondary {
+      background: #e0f2fe;
+      color: #075985;
+    }
+
+    .action-btn.secondary:hover {
+      background: #bae6fd;
+    }
+
+    .verify-box {
+      display: grid;
+      grid-template-columns: 1fr 90px;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .verify-result {
+      margin-top: 12px;
+      border-radius: 14px;
+      padding: 12px;
+      font-weight: 700;
+      display: none;
+    }
+
+    .verify-result.ok {
+      display: block;
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .verify-result.fail {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .nutrition-item {
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 12px;
+      border: 1px solid #edf2f7;
+    }
+
+    .nutrition-item .label {
+      color: var(--text-sub);
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .nutrition-item .value {
+      font-weight: 700;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--text-sub);
+      font-size: 13px;
+      margin-top: 28px;
+      line-height: 1.8;
+    }
+
+    .loading {
+      background: white;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      color: var(--primary-dark);
+      font-weight: 700;
+      margin-top: 22px;
+    }
+
+    @media (max-width: 920px) {
+      .hero-content,
+      .detail-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .side-card {
+        position: static;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        padding: 18px 12px 38px;
+      }
+
+      .hero {
+        padding: 28px 20px;
+        border-radius: 20px;
+      }
+
+      .product-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .product-head {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .product-icon {
+        margin: 0 auto;
+      }
+
+      .info-grid,
+      .nutrition-grid,
+      .action-row,
+      .verify-box {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        min-width: 560px;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .toolbar,
+      .product-grid,
+      .action-row,
+      .verify-box,
+      .footer-note {
+        display: none;
+      }
+
+      .hero,
+      .card {
+        box-shadow: none;
+      }
+
+      .detail-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side-card {
+        position: static;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-content">
+        <div>
+          <h1>食品二维码溯源系统</h1>
+          <p>扫码查看食品生产、检测、仓储物流和销售流通信息。</p>
+          <p>本系统用于课堂实验演示：二维码负责打开网页，产品编号负责查询数据，JSON 文件负责存放食品溯源信息。</p>
+
+          <div class="hero-badges">
+            <span class="hero-badge">一物一码</span>
+            <span class="hero-badge">扫码可查</span>
+            <span class="hero-badge">JSON 数据驱动</span>
+            <span class="hero-badge">GitHub Pages 发布</span>
+          </div>
+        </div>
+
+        <div class="hero-panel">
+          <div class="big-icon">📱🔎</div>
+          <div class="qr-hint">
+            示例链接：<br />
+            <strong>?id=APP202605001</strong><br />
+            网页会根据产品编号读取 <strong>products.json</strong> 中对应的食品信息。
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <input id="searchInput" type="text" placeholder="搜索食品名称、产品编号、类别、产地..." />
+      <select id="productSelect">
+        <option value="">选择一个食品</option>
+      </select>
+      <button id="showAllBtn">查看全部</button>
+    </div>
+
+    <div id="loading" class="loading">正在加载食品溯源数据，请稍候...</div>
+
+    <div id="message" class="status-message" style="display: none;"></div>
+
+    <section id="listSection" style="display: none;">
+      <div class="section-title">
+        <span></span>
+        <h2>食品列表</h2>
+      </div>
+      <div id="productGrid" class="product-grid"></div>
+    </section>
+
+    <section id="detailSection" class="detail">
+      <div class="section-title">
+        <span></span>
+        <h2>溯源详情</h2>
+      </div>
+
+      <div class="detail-layout">
+        <main>
+          <div class="card">
+            <div class="product-head">
+              <div id="productIcon" class="product-icon">🍎</div>
+              <div class="product-title">
+                <h2 id="productName">食品名称</h2>
+                <p id="productDesc">食品说明</p>
+                <div id="badgeRow" class="badge-row"></div>
+              </div>
+            </div>
+
+            <div id="basicInfo" class="info-grid"></div>
+
+            <div id="shelfLifeBox" class="summary-box"></div>
+
+            <div class="progress-wrap">
+              <div class="progress-label">
+                <span>保质期进度</span>
+                <span id="shelfPercentText">0%</span>
+              </div>
+              <div class="progress">
+                <div id="shelfProgress" class="progress-inner"></div>
+              </div>
+            </div>
+
+            <div id="qualityConclusion" class="summary-box"></div>
+          </div>
+
+          <div class="card">
+            <div class="section-title" style="margin-top: 0;">
+              <span></span>
+              <h2>质量检测报告</h2>
+            </div>
+            <div id="testSummary" class="info-grid"></div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>检测项目</th>
+                    <th>检测值</th>
+                    <th>标准要求</th>
+                    <th>结果</th>
+                  </tr>
+                </thead>
+                <tbody id="indicatorTable"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-title" style="margin-top: 0;">
+              <span></span>
+              <h2>流通物流时间轴</h2>
+            </div>
+            <div id="timeline" class="timeline"></div>
+          </div>
+
+          <div class="card">
+            <div class="section-title" style="margin-top: 0;">
+              <span></span>
+              <h2>营养成分与认证信息</h2>
+            </div>
+            <div id="nutritionGrid" class="nutrition-grid"></div>
+
+            <div style="height: 14px;"></div>
+
+            <div id="certifications" class="badge-row"></div>
+          </div>
+        </main>
+
+        <aside class="side-card">
+          <div class="card qr-box">
+            <h2 style="margin-top: 0;">本产品二维码链接</h2>
+            <img id="qrPreview" alt="二维码预览" />
+            <div id="productLink" class="link-box"></div>
+
+            <div class="action-row">
+              <button class="action-btn" id="copyBtn">复制链接</button>
+              <button class="action-btn secondary" id="printBtn">打印页面</button>
+            </div>
+
+            <p style="font-size: 13px; color: var(--text-sub); line-height: 1.7;">
+              说明：二维码预览使用在线接口生成。如无法显示，可将上方链接复制到二维码生成工具中生成。
+            </p>
+          </div>
+
+          <div class="card">
+            <h2 style="margin-top: 0;">防伪码模拟查询</h2>
+            <p style="color: var(--text-sub); line-height: 1.7;">
+              输入产品防伪码，模拟验证该食品是否与当前溯源信息匹配。
+            </p>
+            <div class="verify-box">
+              <input id="verifyInput" type="text" placeholder="输入防伪码" />
+              <button id="verifyBtn">验证</button>
+            </div>
+            <div id="verifyResult" class="verify-result"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <div class="footer-note">
+      本网页为《传感器及自动识别技术》课程实验示例，用于学习二维码、URL 参数、JSON 数据读取和食品溯源系统的基本实现方式。<br />
+      本实验中的检测数据、企业信息和防伪码均为教学演示数据，不作为真实食品检测依据。
+    </div>
+  </div>
+
+  <script>
+    const DATA_FILE = "products.json";
+
+    let products = [];
+    let currentProduct = null;
+
+    const loadingEl = document.getElementById("loading");
+    const messageEl = document.getElementById("message");
+    const listSection = document.getElementById("listSection");
+    const productGrid = document.getElementById("productGrid");
+    const detailSection = document.getElementById("detailSection");
+    const productSelect = document.getElementById("productSelect");
+    const searchInput = document.getElementById("searchInput");
+    const showAllBtn = document.getElementById("showAllBtn");
+
+    function escapeHtml(value) {
+      if (value === undefined || value === null) return "";
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    function buildProductUrl(productId) {
+      const baseUrl = window.location.origin + window.location.pathname;
+      return baseUrl + "?id=" + encodeURIComponent(productId);
+    }
+
+    function getDaysBetween(dateA, dateB) {
+      const oneDay = 24 * 60 * 60 * 1000;
+      const a = new Date(dateA + "T00:00:00");
+      const b = new Date(dateB + "T00:00:00");
+      return Math.ceil((b - a) / oneDay);
+    }
+
+    function getShelfInfo(product) {
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
+
+      const productionDate = product.productionDate;
+      const expirationDate = product.expirationDate;
+
+      const totalDays = Math.max(getDaysBetween(productionDate, expirationDate), 1);
+      const usedDays = Math.max(getDaysBetween(productionDate, todayStr), 0);
+      const remainingDays = getDaysBetween(todayStr, expirationDate);
+
+      let percent = Math.min(Math.max((usedDays / totalDays) * 100, 0), 100);
+      percent = Math.round(percent);
+
+      let status = "正常";
+      let tagClass = "green";
+      let message = `距离保质期结束还有 ${remainingDays} 天。`;
+
+      if (remainingDays < 0) {
+        status = "已过期";
+        tagClass = "red";
+        message = `该产品已超过保质期 ${Math.abs(remainingDays)} 天。`;
+        percent = 100;
+      } else if (remainingDays <= 3) {
+        status = "临期";
+        tagClass = "orange";
+        message = `该产品即将到期，剩余 ${remainingDays} 天，请尽快食用。`;
+      }
+
+      return {
+        totalDays,
+        usedDays,
+        remainingDays,
+        percent,
+        status,
+        tagClass,
+        message
+      };
+    }
+
+    function showMessage(text, type = "warning") {
+      messageEl.style.display = "block";
+      messageEl.textContent = text;
+
+      if (type === "error") {
+        messageEl.style.borderLeftColor = "#dc2626";
+        messageEl.style.color = "#991b1b";
+      } else {
+        messageEl.style.borderLeftColor = "#f97316";
+        messageEl.style.color = "#9a3412";
+      }
+    }
+
+    function hideMessage() {
+      messageEl.style.display = "none";
+      messageEl.textContent = "";
+    }
+
+    function renderProductList(list) {
+      productGrid.innerHTML = "";
+
+      if (!list.length) {
+        productGrid.innerHTML = `
+          <div class="status-message" style="grid-column: 1 / -1;">
+            没有找到符合条件的食品。
+          </div>
+        `;
+        return;
+      }
+
+      list.forEach(product => {
+        const shelf = getShelfInfo(product);
+
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.innerHTML = `
+          <div class="emoji">${escapeHtml(product.imageEmoji || "📦")}</div>
+          <h3>${escapeHtml(product.name)}</h3>
+          <p>产品编号：${escapeHtml(product.id)}</p>
+          <p>类别：${escapeHtml(product.category)}</p>
+          <p>产地：${escapeHtml(product.origin)}</p>
+          <div class="badge-row">
+            <span class="tag green">${escapeHtml(product.traceStatus)}</span>
+            <span class="tag ${shelf.tagClass}">${escapeHtml(shelf.status)}</span>
+          </div>
+        `;
+
+        card.addEventListener("click", () => {
+          selectProduct(product.id, true);
+        });
+
+        productGrid.appendChild(card);
+      });
+    }
+
+    function renderProductOptions() {
+      productSelect.innerHTML = `<option value="">选择一个食品</option>`;
+
+      products.forEach(product => {
+        const option = document.createElement("option");
+        option.value = product.id;
+        option.textContent = `${product.name}（${product.id}）`;
+        productSelect.appendChild(option);
+      });
+    }
+
+    function renderBasicInfo(product) {
+      const basicInfo = document.getElementById("basicInfo");
+
+      const items = [
+        ["产品编号", product.id],
+        ["食品类别", product.category],
+        ["品牌名称", product.brand],
+        ["生产批次", product.batch],
+        ["产地信息", product.origin],
+        ["详细产地", product.originDetail],
+        ["生产企业", product.producer],
+        ["联系电话", product.producerContact],
+        ["生产日期", product.productionDate],
+        ["保质期至", product.expirationDate],
+        ["保存条件", product.storageCondition],
+        ["防伪码", product.antiFakeCode]
+      ];
+
+      basicInfo.innerHTML = items.map(([label, value]) => `
+        <div class="info-item">
+          <div class="label">${escapeHtml(label)}</div>
+          <div class="value">${escapeHtml(value)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderTestReport(product) {
+      const report = product.testReport || {};
+      const testSummary = document.getElementById("testSummary");
+      const indicatorTable = document.getElementById("indicatorTable");
+
+      const summaryItems = [
+        ["报告编号", report.reportNo],
+        ["检测机构", report.testOrg],
+        ["检测日期", report.testDate],
+        ["检测结论", report.testResult],
+        ["检测人员", report.inspector]
+      ];
+
+      testSummary.innerHTML = summaryItems.map(([label, value]) => `
+        <div class="info-item">
+          <div class="label">${escapeHtml(label)}</div>
+          <div class="value">${escapeHtml(value)}</div>
+        </div>
+      `).join("");
+
+      const indicators = report.indicators || [];
+      indicatorTable.innerHTML = indicators.map(item => `
+        <tr>
+          <td>${escapeHtml(item.name)}</td>
+          <td>${escapeHtml(item.value)}</td>
+          <td>${escapeHtml(item.standard)}</td>
+          <td><span class="tag green">${escapeHtml(item.result)}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderTimeline(product) {
+      const timeline = document.getElementById("timeline");
+      const logistics = product.logistics || [];
+
+      timeline.innerHTML = logistics.map(item => `
+        <div class="timeline-item">
+          <div class="time">${escapeHtml(item.time)}</div>
+          <div class="event">${escapeHtml(item.event)}</div>
+          <div class="meta">
+            地点：${escapeHtml(item.location)}<br />
+            操作人：${escapeHtml(item.operator)}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderNutrition(product) {
+      const nutritionGrid = document.getElementById("nutritionGrid");
+      const nutrition = product.nutrition || {};
+
+      const items = Object.entries(nutrition);
+
+      nutritionGrid.innerHTML = items.map(([key, value]) => `
+        <div class="nutrition-item">
+          <div class="label">${escapeHtml(key)}</div>
+          <div class="value">${escapeHtml(value)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderCertifications(product) {
+      const certifications = document.getElementById("certifications");
+      const list = product.certifications || [];
+
+      certifications.innerHTML = list.map(item => `
+        <span class="tag green">${escapeHtml(item)}</span>
+      `).join("");
+    }
+
+    function renderProductDetail(product) {
+      currentProduct = product;
+      const shelf = getShelfInfo(product);
+      const productUrl = buildProductUrl(product.id);
+
+      document.getElementById("productIcon").textContent = product.imageEmoji || "📦";
+      document.getElementById("productName").textContent = product.name;
+      document.getElementById("productDesc").textContent = product.description || "";
+
+      document.getElementById("badgeRow").innerHTML = `
+        <span class="tag green">${escapeHtml(product.traceStatus)}</span>
+        <span class="tag">${escapeHtml(product.category)}</span>
+        <span class="tag green">安全等级：${escapeHtml(product.safetyLevel)}</span>
+        <span class="tag ${shelf.tagClass}">保质期状态：${escapeHtml(shelf.status)}</span>
+      `;
+
+      renderBasicInfo(product);
+
+      document.getElementById("shelfLifeBox").innerHTML = `
+        <strong>保质期提示：</strong>${escapeHtml(shelf.message)}
+        <br />
+        生产日期：${escapeHtml(product.productionDate)}，
+        保质期至：${escapeHtml(product.expirationDate)}，
+        总保质期：${escapeHtml(product.shelfLifeDays)} 天。
+      `;
+
+      document.getElementById("shelfPercentText").textContent = shelf.percent + "%";
+      document.getElementById("shelfProgress").style.width = shelf.percent + "%";
+
+      if (shelf.tagClass === "red") {
+        document.getElementById("shelfProgress").style.background = "linear-gradient(90deg, #ef4444, #dc2626)";
+      } else if (shelf.tagClass === "orange") {
+        document.getElementById("shelfProgress").style.background = "linear-gradient(90deg, #fb923c, #f97316)";
+      } else {
+        document.getElementById("shelfProgress").style.background = "linear-gradient(90deg, #22c55e, #14b8a6)";
+      }
+
+      document.getElementById("qualityConclusion").innerHTML = `
+        <strong>溯源结论：</strong>${escapeHtml(product.qualityConclusion)}
+      `;
+
+      renderTestReport(product);
+      renderTimeline(product);
+      renderNutrition(product);
+      renderCertifications(product);
+
+      document.getElementById("productLink").textContent = productUrl;
+      document.getElementById("qrPreview").src =
+        "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(productUrl);
+
+      document.getElementById("verifyInput").value = "";
+      document.getElementById("verifyResult").className = "verify-result";
+      document.getElementById("verifyResult").textContent = "";
+
+      productSelect.value = product.id;
+      detailSection.classList.add("show");
+    }
+
+    function selectProduct(productId, updateUrl = false) {
+      const product = products.find(item => item.id === productId);
+
+      if (!product) {
+        detailSection.classList.remove("show");
+        showMessage(`未找到产品编号为 ${productId} 的食品信息，请检查二维码链接中的 id 是否与 products.json 中的 id 一致。`, "error");
+        return;
+      }
+
+      hideMessage();
+      renderProductDetail(product);
+
+      if (updateUrl) {
+        const newUrl = buildProductUrl(product.id);
+        window.history.pushState({}, "", newUrl);
+      }
+
+      window.scrollTo({
+        top: detailSection.offsetTop - 10,
+        behavior: "smooth"
+      });
+    }
+
+    function filterProducts(keyword) {
+      const text = keyword.trim().toLowerCase();
+
+      if (!text) {
+        return products;
+      }
+
+      return products.filter(product => {
+        const searchable = [
+          product.id,
+          product.name,
+          product.category,
+          product.brand,
+          product.batch,
+          product.origin,
+          product.producer
+        ].join(" ").toLowerCase();
+
+        return searchable.includes(text);
+      });
+    }
+
+    function copyCurrentLink() {
+      if (!currentProduct) return;
+
+      const link = buildProductUrl(currentProduct.id);
+
+      navigator.clipboard.writeText(link)
+        .then(() => {
+          alert("产品二维码链接已复制：\n" + link);
+        })
+        .catch(() => {
+          alert("复制失败，请手动复制页面中的链接。");
+        });
+    }
+
+    function verifyAntiFakeCode() {
+      if (!currentProduct) return;
+
+      const input = document.getElementById("verifyInput").value.trim();
+      const result = document.getElementById("verifyResult");
+
+      if (!input) {
+        result.className = "verify-result fail";
+        result.textContent = "请输入防伪码后再验证。";
+        return;
+      }
+
+      if (input === currentProduct.antiFakeCode) {
+        result.className = "verify-result ok";
+        result.textContent = "验证通过：防伪码与当前产品信息匹配。";
+      } else {
+        result.className = "verify-result fail";
+        result.textContent = "验证失败：防伪码与当前产品信息不匹配，请检查输入。";
+      }
+    }
+
+    async function loadProducts() {
+      try {
+        const response = await fetch(DATA_FILE, { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error("无法读取 products.json，状态码：" + response.status);
+        }
+
+        products = await response.json();
+
+        if (!Array.isArray(products)) {
+          throw new Error("products.json 最外层必须是数组 [ ]。");
+        }
+
+        loadingEl.style.display = "none";
+        listSection.style.display = "block";
+
+        renderProductOptions();
+        renderProductList(products);
+
+        const productId = getQueryParam("id");
+
+        if (productId) {
+          selectProduct(productId, false);
+        } else {
+          showMessage("当前链接中没有产品编号 id。请选择一个食品，或使用类似 ?id=APP202605001 的二维码链接。");
+        }
+      } catch (error) {
+        loadingEl.style.display = "none";
+        showMessage("数据加载失败，请检查 products.json 是否上传、文件名是否正确、JSON 格式是否有错误。", "error");
+        console.error(error);
+      }
+    }
+
+    productSelect.addEventListener("change", function () {
+      if (this.value) {
+        selectProduct(this.value, true);
+      }
+    });
+
+    searchInput.addEventListener("input", function () {
+      const filtered = filterProducts(this.value);
+      renderProductList(filtered);
+    });
+
+    showAllBtn.addEventListener("click", function () {
+      hideMessage();
+      searchInput.value = "";
+      renderProductList(products);
+      detailSection.classList.remove("show");
+      window.history.pushState({}, "", window.location.origin + window.location.pathname);
+      productSelect.value = "";
+      window.scrollTo({
+        top: listSection.offsetTop - 10,
+        behavior: "smooth"
+      });
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", copyCurrentLink);
+
+    document.getElementById("printBtn").addEventListener("click", function () {
+      window.print();
+    });
+
+    document.getElementById("verifyBtn").addEventListener("click", verifyAntiFakeCode);
+
+    window.addEventListener("popstate", function () {
+      const productId = getQueryParam("id");
+      if (productId) {
+        selectProduct(productId, false);
+      }
+    });
+
+    loadProducts();
+  </script>
+</body>
+</html>
