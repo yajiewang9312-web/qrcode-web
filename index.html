@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>食品二维码溯源系统</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif;
+      background: #f4f8fb; color: #222; }
+    .container { max-width: 760px; margin: 0 auto;
+      padding: 20px; }
+    .header { background: #0f766e; color: white;
+      padding: 24px; border-radius: 14px; text-align: center; }
+    .card { background: white; margin-top: 16px; padding: 18px;
+      border-radius: 12px; box-shadow: 0 2px 8px #0001; }
+    .status { display: inline-block; padding: 6px 12px;
+      border-radius: 20px; background: #dcfce7; color: #166534;
+      font-weight: bold; }
+    .timeline li { margin: 8px 0; }
+    .error { color: #b91c1c; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>食品二维码溯源系统</h1>
+      <p>扫码查看食品生产、检测与物流信息</p>
+    </div>
+    <div id="app" class="card">正在加载溯源信息……</div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
+    const app = document.getElementById('app');
+
+    async function loadProduct() {
+      if (!productId) {
+        app.innerHTML = '<p class="error">未检测到产品编号 id。</p>';
+        return;
+      }
+
+      const response = await fetch('products.json');
+      const products = await response.json();
+      const product = products.find(p => p.id === productId);
+
+      if (!product) {
+        app.innerHTML = '<p class="error">未找到该产品信息。</p>';
+        return;
+      }
+
+      app.innerHTML = `
+        <h2>${product.name}</h2>
+        <p><span class="status">检测结果：${product.testResult}</span></p>
+        <h3>一、基本信息</h3>
+        <p>产品编号：${product.id}</p>
+        <p>生产批次：${product.batch}</p>
+        <p>产地：${product.origin}</p>
+        <p>生产日期：${product.date}</p>
+        <p>保质期：${product.shelfLife}</p>
+        <p>生产企业：${product.producer}</p>
+        <h3>二、检测信息</h3>
+        <p>检测机构：${product.testOrg}</p>
+        <p>检测结果：${product.testResult}</p>
+        <h3>三、物流时间轴</h3>
+        <ul class="timeline">
+          ${product.logistics.map(item => `<li>${item}</li>`).join('')}
+        </ul>
+        <h3>四、溯源结论</h3>
+        <p>${product.conclusion}</p>
+      `;
+    }
+
+    loadProduct().catch(() => {
+      app.innerHTML = '<p class="error">数据加载失败，请检查文件。</p>';
+    });
+  </script>
+</body>
+</html>
